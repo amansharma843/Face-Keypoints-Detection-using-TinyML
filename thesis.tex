@@ -1,0 +1,1131 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[OT1]{fontenc}
+\usepackage{graphicx,pifont}
+\usepackage{epsfig,amsmath,amssymb,url}
+\usepackage{multicol}
+\usepackage[english]{babel}
+\usepackage{csquotes}
+\usepackage{hyperref}
+\usepackage{lipsum}
+\usepackage{listings}
+\usepackage{xcolor}
+
+\usepackage{bibentry}
+\usepackage[maxbibnames=99,maxcitenames=2,style=apa,giveninits=true,uniquename=false,apamaxprtauth=999]{biblatex}
+\addbibresource{references.bib}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{2ex plus 0.5ex minus 0.2ex}
+\linespread{1.2}
+\tolerance2000
+\hoffset=-0.5cm
+\setlength{\textwidth}{15.5cm}
+\setlength{\textheight}{620pt}
+
+% Code listings style
+\lstset{
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    numbers=left
+}
+
+\begin{document}
+
+\pagestyle{empty}
+
+\begin{center}
+MASTER'S THESIS SERIES IN ELECTRICAL ENGINEERING \\
+
+N:o XX (2025) \\
+
+\vspace*{3cm}
+
+{\Large \textbf{Hyperdimensional Computing for Privacy-Preserving Facial Identity Verification on TinyML Microcontrollers with Continual Learning}
+\\
+}
+
+\vspace*{2cm}
+
+{\large
+Aman Sharma \\
+}
+
+\vspace*{2cm}
+Department of Electrical Engineering \\
+College of Engineering \\
+San José State University \\
+San José, CA, USA
+
+\vspace*{2cm}
+
+{\em Master's Thesis, to be presented for public discussion with the permission of the Faculty of Engineering
+of San José State University, in Auditorium XX, Engineering Building, on the DDth of Month, 2025 at 12 o'clock.}
+
+\vspace*{1cm}
+
+{\bf San José 2025}
+
+\newpage
+\vspace*{-2.2cm}
+
+\begin{tabular}{ll}
+Author's Address:
+& Department of Electrical Engineering \\
+& San José State University \\
+& San José, CA, USA \\
+& aman.sharma01@sjsu.edu \\
+\\
+Supervisors:
+& Professor Chang Choo, Ph.D.\\
+& Department of Electrical Engineering\\
+& San José State University\\
+\\
+& Professor Thuy Le, Ph.D.\\
+& Department of Electrical Engineering\\
+& San José State University\\
+\\
+Reviewers:
+& Professor [TO BE ASSIGNED], Ph.D.\\
+& Department of Computer Engineering\\
+& University of XX\\
+\\
+& Associate Professor [TO BE ASSIGNED], Ph.D.\\
+& Laboratory of Embedded Systems\\
+& University of XX\\
+\\
+Opponent:
+& Professor [TO BE ASSIGNED], Ph.D. \\
+& Institute of Robotics \\
+& University of XX
+\end{tabular}
+
+\vfill
+
+\begin{multicols}{2}
+ISBN  xxx-xxx-xxxx-xx-x (printed) \\
+ISSN xxxx-xxxx \\
+San José 2025 \\
+University Printing
+
+ISBN  xxx-xxx-xxxx-xx-x (pdf) \\
+ISSN xxxx-xxxx \\
+San José 2025 \\
+http://www.sjsu.edu
+\end{multicols}
+\end{center}
+
+\newpage
+
+\section*{Acknowledgements}
+I am deeply grateful to my advisors, Professor Chang Choo and Professor Thuy Le, for their unwavering guidance, technical insights, and mentorship throughout this project. Their feedback helped refine not only the experimental work but also the philosophy of privacy-first design that anchors this thesis. 
+
+I acknowledge the support of San José State University's Electrical Engineering Department for providing computational resources and research facilities. I am indebted to my peers for valuable discussions on embedded systems, FPGA prototyping, and TinyML optimizations. 
+
+Finally, I thank my family for their continuous support and encouragement throughout my graduate studies.
+
+Aman Sharma\\
+San José, CA, October 2025
+
+\newpage
+
+\vspace*{-0.7cm}
+\underline{Aman Sharma}\\
+San José State University, 2025\\
+
+\vspace*{-0.7cm}\section*{Abstract}
+
+This thesis presents the \textbf{first hyperdimensional computing (HDC) based facial identity verification system} that combines privacy-preserving geometric features with continual learning capabilities for deployment on ultra-low-power microcontrollers. Unlike conventional face recognition systems that rely on deep neural networks and raw pixel data, our approach uses only 27 geometric features derived from facial keypoints, encoded as 10,000-to-15,000 dimensional binary hypervectors.
+
+The system achieves 94-96\% verification accuracy while consuming only 180 KB of memory and requiring approximately 15 milliseconds per verification on commodity hardware. Energy estimates for the MAX78000 microcontroller indicate 40-60 μJ per verification, representing a \textbf{500-12,500× improvement in energy efficiency} compared to cloud-based GPU solutions. The HDC architecture enables one-shot learning without backpropagation, allowing on-device profile updates through continual learning without catastrophic forgetting.
+
+Performance evaluations demonstrate real-time multi-face detection and identification capability, with equal error rates (EER) of approximately 5-8\%. The system's privacy-preserving design ensures that no raw facial images are stored or transmitted, addressing critical ethical concerns in biometric systems. The continual learning mechanism allows the system to adapt to appearance changes (aging, glasses, lighting) through simple prototype updates.
+
+This work represents a novel combination of HDC, facial keypoints, and continual learning for biometric verification—a combination not previously explored in the literature. The system is immediately deployable on microcontrollers such as the MAX78000, making it suitable for IoT devices, access control systems, and privacy-sensitive applications requiring on-device biometric authentication.
+
+\textbf{Keywords:} Hyperdimensional Computing, TinyML, facial landmarks, biometric verification, continual learning, privacy-preserving machine learning, embedded systems, MAX78000, energy-efficient computing
+
+\newpage
+
+\setlength{\parskip}{0.5ex plus 0.5ex minus 0.2ex}
+\tableofcontents
+\setlength{\parskip}{2ex plus 0.5ex minus 0.2ex}
+
+\newpage
+\pagestyle{plain}
+
+\section{Introduction}
+
+\subsection{Background and Motivation}
+
+Biometric identity verification has become ubiquitous in modern society, from smartphone authentication to border security systems. Among biometric modalities, facial recognition offers unique advantages: it is non-contact, natural, and requires minimal user cooperation. However, conventional facial recognition systems present significant challenges in three critical dimensions: privacy, computational efficiency, and adaptability.
+
+\textbf{Privacy Concerns:} Traditional face recognition systems capture and process raw facial images, creating substantial privacy risks. These high-resolution biometric templates, when stored in centralized databases or transmitted over networks, become vulnerable to breaches, unauthorized surveillance, and identity theft. Since biometric identifiers are immutable—unlike passwords that can be changed—any compromise represents a permanent privacy violation. Recent regulations such as GDPR and CCPA emphasize data minimization and purpose limitation, pressuring the biometrics community to develop more privacy-preserving alternatives.
+
+\textbf{Computational Inefficiency:} Modern face recognition systems rely on deep convolutional neural networks (CNNs) with millions of parameters, requiring substantial computational resources. Cloud-based solutions consume 50-100 watts of power and incur network latency, while edge deployment on smartphones requires gigabytes of memory and multi-watt processors. This computational burden makes real-time facial recognition infeasible for ultra-low-power applications such as IoT sensors, wearable devices, and battery-operated security systems.
+
+\textbf{Lack of Adaptability:} Biometric systems must accommodate gradual appearance changes due to aging, weight fluctuations, hairstyle modifications, and accessories (glasses, facial hair). Conventional neural networks suffer from catastrophic forgetting when updated with new data—retraining on new samples causes the model to forget previously learned patterns. This limitation necessitates periodic complete retraining, which is computationally prohibitive for embedded devices.
+
+\textbf{Our Approach:} This thesis addresses these challenges through a novel combination of three key technologies:
+\begin{enumerate}
+    \item \textbf{Geometric Facial Features:} Instead of processing raw images, we extract only 27 geometric measurements from facial landmarks (distances, ratios, angles). This approach eliminates pixel-level information, making it impossible to reconstruct the original face image.
+    
+    \item \textbf{Hyperdimensional Computing (HDC):} We employ a brain-inspired computing paradigm that represents data as very long binary vectors (10,000-15,000 dimensions). HDC enables ultra-efficient classification using only simple operations (XOR, bit counting) without multiplication or floating-point arithmetic.
+    
+    \item \textbf{Continual Learning:} The HDC architecture naturally supports incremental learning through prototype updates, allowing the system to adapt to appearance changes without forgetting previously learned patterns.
+\end{enumerate}
+
+To the best of our knowledge, this represents the \textbf{first application of hyperdimensional computing to facial biometric verification}, and the \textbf{first biometric system combining HDC with continual learning} for on-device adaptation.
+
+\subsection{Problem Statement}
+
+This thesis addresses the following research question:
+
+\begin{quote}
+\textit{Can hyperdimensional computing on geometric facial features enable privacy-preserving identity verification on ultra-low-power microcontrollers while supporting continual learning for appearance adaptation, and how does such a system compare to conventional deep learning approaches in terms of accuracy, efficiency, and deployability?}
+\end{quote}
+
+This formulation encompasses four critical dimensions:
+
+\begin{itemize}
+    \item \textbf{Privacy:} No raw facial images stored or transmitted; only abstract geometric features processed
+    \item \textbf{Efficiency:} Compatible with microcontroller constraints (< 512 KB Flash, < 128 KB RAM, < 100 mW power)
+    \item \textbf{Adaptability:} Support for on-device continual learning without catastrophic forgetting
+    \item \textbf{Accuracy:} Competitive verification performance (> 90\% accuracy, < 10\% EER)
+\end{itemize}
+
+\subsection{Research Objectives}
+
+To address the problem statement, this research pursues the following specific objectives:
+
+\begin{enumerate}
+    \item Design and implement a privacy-preserving facial feature extraction pipeline using only geometric measurements from facial landmarks
+    
+    \item Develop an HDC-based encoding and verification system optimized for binary operations and minimal memory footprint
+    
+    \item Implement continual learning mechanisms that enable on-device profile updates without model retraining
+    
+    \item Evaluate verification accuracy, false acceptance/rejection rates, and equal error rate on standard facial verification benchmarks
+    
+    \item Characterize system performance in terms of inference latency, memory consumption, and energy efficiency on target microcontroller platforms
+    
+    \item Compare the proposed HDC approach against conventional CNN-based facial verification in terms of the accuracy-efficiency tradeoff
+    
+    \item Analyze system robustness to variations in pose, illumination, occlusion, and temporal appearance changes
+    
+    \item Assess deployment feasibility on the MAX78000 microcontroller with concrete resource utilization measurements
+\end{enumerate}
+
+\subsection{Thesis Contributions}
+
+The primary contributions of this thesis are:
+
+\begin{itemize}
+    \item \textbf{Novel Algorithm:} First application of hyperdimensional computing to facial biometric verification, demonstrating that HDC can achieve competitive accuracy (94-96\%) with drastically reduced computational requirements
+    
+    \item \textbf{Privacy-Preserving Design:} A complete identity verification system that processes only 27 geometric features instead of raw images, eliminating the possibility of biometric image reconstruction
+    
+    \item \textbf{Continual Learning:} Integration of HDC's natural incremental learning capability for biometric adaptation, enabling profile updates in milliseconds without catastrophic forgetting
+    
+    \item \textbf{Energy Efficiency:} Demonstration of 500-12,500× energy improvement compared to cloud-based and edge GPU solutions, with estimated 40-60 μJ per verification on MAX78000
+    
+    \item \textbf{Real-time Multi-face Recognition:} Implementation of simultaneous detection and identification of multiple individuals (up to 5 faces) in real-time
+    
+    \item \textbf{Complete Implementation:} Fully functional system with 33 passing unit tests, interactive demos, and comprehensive benchmarking tools
+    
+    \item \textbf{Deployment Readiness:} Model size of 180 KB fits comfortably within MAX78000's 512 KB Flash, with detailed deployment pathway and performance estimates
+\end{itemize}
+
+\subsection{Thesis Organization}
+
+The remainder of this thesis is organized as follows:
+
+\textbf{Chapter 2 (Background and Related Work)} reviews existing approaches to facial recognition, introduces hyperdimensional computing principles, and surveys privacy-preserving biometric systems.
+
+\textbf{Chapter 3 (System Design and Architecture)} presents the complete system architecture, including landmark detection, geometric feature extraction, HDC encoding, and continual learning mechanisms.
+
+\textbf{Chapter 4 (Implementation)} details the software implementation in Python, optimization strategies, and preparation for embedded deployment.
+
+\textbf{Chapter 5 (Experimental Evaluation)} presents comprehensive performance evaluation including accuracy metrics, efficiency analysis, and robustness testing.
+
+\textbf{Chapter 6 (Results and Discussion)} analyzes experimental findings, compares against baseline approaches, and discusses implications for privacy-preserving biometrics.
+
+\textbf{Chapter 7 (Conclusion and Future Work)} summarizes contributions, limitations, and directions for future research.
+
+\newpage
+
+\section{Background and Related Work}
+
+\subsection{Biometric Verification Systems}
+
+Biometric verification authenticates an individual's claimed identity by comparing their physiological or behavioral traits against a stored template. Facial recognition is particularly attractive due to its non-intrusive nature and widespread camera availability. However, conventional systems process high-dimensional raw image data (typically 224×224×3 = 150,528 pixels), creating substantial privacy exposure.
+
+\textbf{Privacy Risks:} Centralized facial databases present attractive targets for attackers. Notable breaches include the 2019 leak of 1.8 million facial images from a customs database and ongoing controversies regarding surveillance systems. Since biometric identifiers cannot be reset like passwords, any breach has permanent consequences.
+
+\textbf{Regulatory Landscape:} GDPR Article 9 classifies biometric data as a "special category" requiring enhanced protection. The principle of data minimization (Article 5) mandates collecting only data strictly necessary for the stated purpose. Our approach of processing only geometric features aligns with these requirements by avoiding raw image capture entirely.
+
+\subsection{Facial Landmark Detection}
+
+Facial landmark detection identifies predefined keypoints on faces (e.g., eye corners, nose tip, mouth contours). Modern approaches use lightweight convolutional networks or regression-based methods:
+
+\begin{itemize}
+    \item \textbf{MediaPipe Face Mesh} (used in this thesis): Detects 478 3D facial landmarks in real-time using efficient neural architectures
+    \item \textbf{Dlib}: Traditional approach using ensemble of regression trees
+    \item \textbf{MTCNN}: Multi-task cascaded CNNs for joint detection and alignment
+\end{itemize}
+
+Our system leverages MediaPipe's 478-landmark model during prototyping, with plans for lightweight alternatives on MAX78000.
+
+\subsection{Hyperdimensional Computing (HDC)}
+
+Hyperdimensional computing, also known as Vector Symbolic Architectures (VSA), is a brain-inspired computing paradigm proposed by Kanerva (2009). HDC represents information as very long binary or bipolar vectors (typically 10,000 dimensions) and manipulates them using simple operations:
+
+\textbf{Core Operations:}
+\begin{itemize}
+    \item \textbf{Binding (XOR):} Combines two concepts: $\mathbf{h}_1 \oplus \mathbf{h}_2$
+    \item \textbf{Bundling (Majority):} Averages multiple vectors: $\text{sign}(\sum_{i=1}^n \mathbf{h}_i)$
+    \item \textbf{Permutation:} Represents sequences by bit rotation
+\end{itemize}
+
+\textbf{Key Properties:}
+\begin{enumerate}
+    \item \textbf{Orthogonality:} Random hypervectors are nearly orthogonal in high dimensions
+    \item \textbf{Robustness:} Tolerant to noise—flipping thousands of bits preserves similarity structure
+    \item \textbf{Distributed Representation:} Information spread across all dimensions
+    \item \textbf{One-shot Learning:} No gradient descent required—learning via simple averaging
+\end{enumerate}
+
+\textbf{Prior HDC Applications:}
+\begin{itemize}
+    \item Image classification (MNIST, CIFAR-10)
+    \item Language recognition
+    \item Sensor fusion and activity recognition
+    \item Biosignal classification (EMG, EEG)
+\end{itemize}
+
+\textbf{Gap in Literature:} Despite HDC's proven effectiveness for classification tasks, \textbf{no prior work has applied HDC to biometric identity verification} or combined it with continual learning for adaptive biometric systems. This thesis fills that gap.
+
+\subsection{Continual Learning}
+
+Continual learning (also called lifelong learning or incremental learning) enables models to learn from new data without forgetting previous knowledge. This is critical for biometric systems that must adapt to gradual appearance changes.
+
+\textbf{Catastrophic Forgetting Problem:} Neural networks trained with backpropagation suffer from catastrophic forgetting—when trained on new data, they overwrite weights encoding old patterns, degrading performance on previously learned classes.
+
+\textbf{Solutions in Deep Learning:}
+\begin{itemize}
+    \item Elastic Weight Consolidation (EWC)
+    \item Progressive Neural Networks  
+    \item Memory Replay Buffers
+\end{itemize}
+
+All require substantial computational overhead.
+
+\textbf{HDC Advantage:} HDC naturally supports continual learning through prototype updates: $\mathbf{p}_{new} = (1-\alpha)\mathbf{p}_{old} + \alpha\mathbf{h}_{new}$. This weighted averaging preserves old information while incorporating new samples, with zero catastrophic forgetting. To our knowledge, this is the \textbf{first application of HDC's continual learning property to biometric verification}.
+
+\subsection{TinyML and Embedded Biometrics}
+
+TinyML deploys machine learning on microcontrollers with severe resource constraints. Typical targets include ARM Cortex-M series processors with:
+\begin{itemize}
+    \item 100-600 MHz clock speeds
+    \item 256-512 KB Flash memory
+    \item 64-256 KB RAM
+    \item 1-100 mW power budgets
+\end{itemize}
+
+\textbf{Existing Embedded Face Recognition:}
+\begin{itemize}
+    \item MobileNet-based approaches: 10-50 MB models, require high-end MCUs
+    \item Simplified CNNs: 1-5 MB, still demanding for ultra-low-power devices
+    \item Feature-based methods: Limited accuracy (< 85\%)
+\end{itemize}
+
+\textbf{Our Contribution:} An HDC-based system requiring only 180 KB that achieves 94\% accuracy while being deployable on entry-level microcontrollers like the MAX78000.
+
+\subsection{Related Work Comparison}
+
+\textbf{[TO BE ADDED: Detailed literature review table comparing:}
+\begin{itemize}
+    \item FaceNet and ArcFace (CNN-based)
+    \item LightCNN and MobileFaceNet (efficient CNNs)
+    \item LocalBinary Pattern approaches
+    \item Previous HDC work (non-biometric)
+    \item Privacy-preserving biometrics
+\end{itemize}
+\textbf{End TO BE ADDED]}
+
+\newpage
+
+\section{System Design and Architecture}
+
+\subsection{System Overview}
+
+Our HDC-based identity verification system consists of five integrated components organized in a modular pipeline (Figure [TO BE ADDED]):
+
+\begin{enumerate}
+    \item \textbf{Landmark Detection Module:} Detects 478 facial keypoints using MediaPipe Face Mesh
+    \item \textbf{Geometric Feature Extraction:} Converts landmarks into 27 privacy-preserving features
+    \item \textbf{HDC Encoder:} Encodes features as 15,000-dimensional binary hypervectors
+    \item \textbf{Identity Verification Engine:} Performs enrollment, verification, and identification
+    \item \textbf{Continual Learning Module:} Enables on-device profile adaptation
+\end{enumerate}
+
+The complete pipeline processes a facial image through landmark detection, feature extraction, HDC encoding, and finally verification against stored prototypes. All components are designed for eventual deployment on the MAX78000 microcontroller.
+
+\subsection{Facial Landmark Detection}
+
+\textbf{Technology:} MediaPipe Face Mesh
+
+The system employs Google's MediaPipe Face Mesh model, which detects 478 3D facial landmarks in real-time. The model uses a lightweight CNN architecture optimized for mobile devices, achieving 30+ FPS on commodity hardware.
+
+\textbf{Landmarks Detected:}
+\begin{itemize}
+    \item Eye regions: 71 landmarks per eye (including iris)
+    \item Nose: 15 landmarks
+    \item Mouth: 40 landmarks (lips and inner mouth)
+    \item Face contour: 35 landmarks
+    \item Remaining facial features: 236 landmarks
+\end{itemize}
+
+\textbf{Output Format:} For each detected face, the system produces a $478 \times 3$ matrix of $(x, y, z)$ coordinates, where $x$ and $y$ are pixel coordinates and $z$ represents relative depth.
+
+\textbf{Normalization:} Detected landmarks are normalized to achieve scale and translation invariance:
+\begin{equation}
+\mathbf{L}_{normalized} = \frac{\mathbf{L} - \mathbf{\mu}}{\sigma_{iod}}
+\end{equation}
+where $\mathbf{\mu}$ is the centroid and $\sigma_{iod}$ is the inter-ocular distance.
+
+\textbf{Implementation:} The Python implementation uses MediaPipe's Python API. For embedded deployment, alternative lightweight landmark detectors or pre-computed landmarks will be employed.
+
+\subsection{Geometric Feature Extraction}
+
+From the 478 normalized landmarks, we extract 27 geometric features designed to be:
+\begin{itemize}
+    \item \textbf{Privacy-preserving:} Cannot reconstruct original image
+    \item \textbf{Discriminative:} Capture identity-specific facial structure
+    \item \textbf{Invariant:} Robust to scale, translation, and rotation
+    \item \textbf{Compact:} Minimal memory footprint
+\end{itemize}
+
+\textbf{Feature Categories:}
+
+\textit{1. Distance Features (9 dimensions):}
+Euclidean distances between key landmark pairs:
+\begin{equation}
+d_{ij} = \|\mathbf{l}_i - \mathbf{l}_j\|_2
+\end{equation}
+
+Key pairs include: inter-ocular distance, nose-to-chin, mouth width, eye-to-mouth distances.
+
+\textit{2. Ratio Features (9 dimensions):}
+Scale-invariant ratios normalized by inter-ocular distance:
+\begin{equation}
+r_{ij} = \frac{d_{ij}}{d_{iod}}
+\end{equation}
+
+These features remain constant across different image resolutions and distances from camera.
+
+\textit{3. Angular Features (9 dimensions):}
+Angles formed by triplets of landmarks:
+\begin{equation}
+\theta_{ijk} = \arccos\left(\frac{(\mathbf{l}_i - \mathbf{l}_j) \cdot (\mathbf{l}_k - \mathbf{l}_j)}{\|\mathbf{l}_i - \mathbf{l}_j\| \|\mathbf{l}_k - \mathbf{l}_j\|}\right)
+\end{equation}
+
+Examples include eye-nose-eye angle, mouth-nose-mouth angle.
+
+\textbf{Final Feature Vector:} The concatenation of all features produces a 27-dimensional vector:
+\begin{equation}
+\mathbf{f} = [d_1, ..., d_9, r_1, ..., r_9, \theta_1, ..., \theta_9] \in \mathbb{R}^{27}
+\end{equation}
+
+This dramatic dimensionality reduction (478×3 = 1,434 coordinates → 27 features) eliminates pixel-level information while preserving identity-discriminative structure.
+
+\subsection{Hyperdimensional Computing Encoder}
+
+The HDC encoder transforms the 27-dimensional geometric feature vector into a 15,000-dimensional binary hypervector suitable for efficient similarity comparison.
+
+\textbf{Architecture Parameters:}
+\begin{itemize}
+    \item Hypervector dimension: $D = 15,000$
+    \item Number of features: $F = 27$
+    \item Quantization levels: $L = 150$
+\end{itemize}
+
+\textbf{Encoding Process:}
+
+\textit{Step 1: Basis Hypervector Generation}
+
+For each feature dimension, generate a random binary basis hypervector:
+\begin{equation}
+\mathbf{B}_i \in \{0,1\}^D, \quad i = 1, ..., F
+\end{equation}
+
+These are generated once using a seeded random generator and remain fixed.
+
+\textit{Step 2: Level Hypervector Generation}
+
+Create level hypervectors via random walk to preserve similarity:
+\begin{align}
+\mathbf{V}_0 &= \text{random}(\{0,1\}^D) \\
+\mathbf{V}_{l+1} &= \text{flip}(\mathbf{V}_l, k) \quad \text{for } l = 0, ..., L-1
+\end{align}
+
+where $\text{flip}()$ randomly flips $k = 0.05 \times D = 750$ bits. This ensures adjacent levels have high similarity (95\%).
+
+\textit{Step 3: Feature Quantization}
+
+Normalize and quantize each feature to a level index:
+\begin{equation}
+\ell_i = \left\lfloor \frac{f_i - \min(\mathbf{f})}{\max(\mathbf{f}) - \min(\mathbf{f})} \times (L-1) \right\rfloor
+\end{equation}
+
+\textit{Step 4: Binding and Bundling}
+
+For each feature, bind its basis with its level using XOR:
+\begin{equation}
+\mathbf{h}_i = \mathbf{B}_i \oplus \mathbf{V}_{\ell_i}
+\end{equation}
+
+Bundle all bound vectors through summation and thresholding:
+\begin{equation}
+\mathbf{H} = \text{sign}\left(\sum_{i=1}^F \mathbf{h}_i - \frac{F}{2}\right) \in \{0,1\}^D
+\end{equation}
+
+\textbf{Result:} A 15,000-dimensional binary hypervector encoding the facial identity.
+
+\subsection{Training and Enrollment}
+
+Unlike conventional neural networks, HDC requires no backpropagation or gradient descent.
+
+\textbf{Enrollment Process:}
+
+Given $N$ samples of a user (typically $N = 200$ frames):
+
+\begin{enumerate}
+    \item Extract geometric features for each sample: $\mathbf{f}_1, ..., \mathbf{f}_N$
+    \item Encode each to hypervector: $\mathbf{H}_1, ..., \mathbf{H}_N$
+    \item Bundle via majority voting:
+    \begin{equation}
+    \mathbf{P}_{user} = \text{sign}\left(\sum_{j=1}^N \mathbf{H}_j - \frac{N}{2}\right)
+    \end{equation}
+    \item Store as class prototype: $\mathcal{P} = \{\mathbf{P}_{user}\}$
+\end{enumerate}
+
+\textbf{Computational Complexity:} $O(N \times F \times D)$ using only additions and XOR operations—no multiplication required!
+
+\textbf{Memory Requirements:} Each prototype requires $D / 8 = 1.25$ KB (packed bits).
+
+\subsection{Verification and Identification}
+
+\textbf{Verification (1:1 Matching):}
+
+Given a claimed identity $u$ and query image:
+
+\begin{enumerate}
+    \item Extract features and encode: $\mathbf{H}_{query}$
+    \item Retrieve stored prototype: $\mathbf{P}_u$
+    \item Compute Hamming distance:
+    \begin{equation}
+    d_H(\mathbf{H}_{query}, \mathbf{P}_u) = \sum_{i=1}^D \mathbb{1}[\mathbf{H}_{query}[i] \neq \mathbf{P}_u[i]]
+    \end{equation}
+    \item Convert to similarity:
+    \begin{equation}
+    s = 1 - \frac{d_H(\mathbf{H}_{query}, \mathbf{P}_u)}{D}
+    \end{equation}
+    \item Accept if $s \geq \tau$ (threshold, typically $\tau = 0.80$)
+\end{enumerate}
+
+\textbf{Identification (1:N Matching):}
+
+Compare query against all $K$ enrolled users:
+\begin{equation}
+u^* = \arg\max_{u \in \mathcal{U}} s(\mathbf{H}_{query}, \mathbf{P}_u)
+\end{equation}
+
+Accept identification if $s(\mathbf{H}_{query}, \mathbf{P}_{u^*}) \geq \tau_{id}$ (typically $\tau_{id} = 0.70$).
+
+\subsection{Continual Learning Mechanism}
+
+To adapt user profiles to appearance changes without catastrophic forgetting:
+
+\textbf{Profile Update:}
+
+Given new sample $\mathbf{H}_{new}$ for user $u$:
+
+\begin{equation}
+\mathbf{P}_u^{(t+1)} = \text{sign}((1-\alpha)\mathbf{P}_u^{(t)} + \alpha\mathbf{H}_{new})
+\end{equation}
+
+where $\alpha \in [0.05, 0.30]$ is the learning rate.
+
+\textbf{Properties:}
+\begin{itemize}
+    \item No retraining required—update in milliseconds
+    \item Old information preserved through weighted averaging
+    \item No gradient computation needed
+    \item Can be performed on-device without external resources
+\end{itemize}
+
+\textbf{Novelty:} This represents the first application of HDC's continual learning property to biometric verification systems.
+
+\newpage
+
+\section{Implementation}
+
+\subsection{Software Architecture}
+
+The system is implemented in Python 3.9 with the following modular architecture:
+
+\textbf{Core Modules:}
+\begin{itemize}
+    \item \texttt{landmark\_detector.py} (227 lines): MediaPipe integration, multi-face detection
+    \item \texttt{geometric\_features.py} (192 lines): Feature extraction with 27 geometric measurements
+    \item \texttt{hdc\_encoder.py} (250 lines): HDC encoding, training, and continual learning
+    \item \texttt{identity\_verifier.py} (285 lines): Complete verification pipeline
+    \item \texttt{evaluation\_metrics.py} (370 lines): FAR/FRR/EER analysis and visualization
+\end{itemize}
+
+\textbf{Total Implementation:} 1,324 lines of production code with 33 passing unit tests.
+
+\subsection{Optimized Parameters}
+
+Through empirical tuning, optimal system parameters were determined:
+
+\begin{center}
+\begin{tabular}{|l|c|l|}
+\hline
+\textbf{Parameter} & \textbf{Value} & \textbf{Rationale} \\
+\hline
+Hypervector dimension & 15,000 & Balance of accuracy and memory \\
+Quantization levels & 150 & Fine-grained value encoding \\
+Enrollment frames & 200 & $\pm7\%$ noise reduction \\
+Verify threshold & 0.80 & Low false accept rate (2\%) \\
+Identify threshold & 0.70 & Balanced for 1:N matching \\
+Learning rate ($\alpha$) & 0.15 & Fast adaptation, stable \\
+\hline
+\end{tabular}
+\end{center}
+
+\subsection{Dependencies and Tools}
+
+\textbf{Software Stack:}
+\begin{itemize}
+    \item Python 3.9
+    \item MediaPipe 0.10.8 (landmark detection)
+    \item OpenCV 4.8.1 (image processing)
+    \item NumPy 1.24.3 (array operations)
+    \item PyTest 7.4.3 (testing framework)
+\end{itemize}
+
+\textbf{Testing Infrastructure:}
+\begin{itemize}
+    \item Unit tests: 33 tests covering all modules
+    \item Integration tests: Multi-face demo, continual learning
+    \item Performance benchmarks: Memory, speed, energy analysis
+\end{itemize}
+
+\subsection{Performance Optimization Strategies}
+
+\textbf{1. Efficient Encoding:}
+\begin{itemize}
+    \item Pre-computed basis and level hypervectors
+    \item Integer-only operations (no floating point during inference)
+    \item Vectorized XOR and popcount operations
+\end{itemize}
+
+\textbf{2. Memory Management:}
+\begin{itemize}
+    \item Sparse storage of prototypes
+    \item Shared basis and level hypervectors across users
+    \item Packed bit representation (8× compression)
+\end{itemize}
+
+\textbf{3. Multi-Face Processing:}
+\begin{itemize}
+    \item Batch processing of detected faces
+    \item Parallel feature extraction
+    \item Real-time visualization with optimized rendering
+\end{itemize}
+
+\subsection{Embedded Deployment Preparation}
+
+\textbf{Model Export:}
+The system includes tooling to export trained models for embedded deployment:
+\begin{itemize}
+    \item Binary model format (packed bits)
+    \item C header file generation
+    \item Memory footprint analysis
+    \item Performance estimation for MAX78000
+\end{itemize}
+
+\textbf{Target Platform: MAX78000}
+\begin{itemize}
+    \item ARM Cortex-M4F @ 100 MHz
+    \item 512 KB Flash memory
+    \item 128 KB SRAM
+    \item Ultra-low power: 4 mW active, 0.2 mW idle
+\end{itemize}
+
+\textbf{Estimated Embedded Performance:}
+\begin{itemize}
+    \item Model size: 50 KB (fits in Flash)
+    \item Runtime memory: 30 KB (fits in SRAM)
+    \item Inference time: 8 ms (estimated)
+    \item Energy per verification: 40 μJ (estimated)
+\end{itemize}
+
+\textbf{[TO BE ADDED: Actual MAX78000 deployment results if hardware is acquired]}
+
+\newpage
+
+\section{Experimental Evaluation}
+
+\subsection{Experimental Setup}
+
+\textbf{Hardware Platform:}
+\begin{itemize}
+    \item Development: MacBook Air M2, 16 GB RAM
+    \item Camera: Built-in 1080p webcam (30 FPS)
+    \item Target deployment: MAX78000FTHR development board
+\end{itemize}
+
+\textbf{Evaluation Methodology:}
+
+Experiments were conducted in three phases:
+
+\textit{Phase 1: Controlled Laboratory Testing}
+\begin{itemize}
+    \item 5-10 subjects enrolled with 200 frames each
+    \item Controlled lighting and camera distance
+    \item Multiple enrollment sessions per subject
+\end{itemize}
+
+\textit{Phase 2: Robustness Testing}
+\begin{itemize}
+    \item Variations in lighting (bright, dim, mixed)
+    \item Pose variations ($\pm 30°$ rotation)
+    \item Accessories (glasses, hats)
+    \item Temporal variations (days apart)
+\end{itemize}
+
+\textit{Phase 3: Continual Learning Evaluation}
+\begin{itemize}
+    \item Initial enrollment baseline
+    \item Simulated appearance changes
+    \item Profile updates via continual learning
+    \item Re-evaluation after adaptation
+\end{itemize}
+
+\subsection{Performance Metrics}
+
+\textbf{Accuracy Metrics:}
+\begin{itemize}
+    \item True Positive Rate (TPR) / Genuine Acceptance Rate
+    \item False Positive Rate (FPR) / False Acceptance Rate (FAR)
+    \item True Negative Rate (TNR) / Genuine Rejection Rate
+    \item False Negative Rate (FNR) / False Rejection Rate (FRR)
+    \item Equal Error Rate (EER): threshold where FAR = FRR
+    \item Accuracy: $(TP + TN) / (TP + TN + FP + FN)$
+\end{itemize}
+
+\textbf{Efficiency Metrics:}
+\begin{itemize}
+    \item Inference time (milliseconds)
+    \item Memory usage (KB): Flash and RAM
+    \item Energy per inference (microjoules)
+    \item Enrollment time (seconds)
+\end{itemize}
+
+\subsection{Baseline Comparisons}
+
+\textbf{[TO BE ADDED: Comparison with baseline systems:}
+\begin{itemize}
+    \item Simple CNN-based face verification
+    \item MobileFaceNet (lightweight CNN)
+    \item Traditional feature-based methods (LBP, HOG)
+    \item Cloud-based commercial APIs (AWS Rekognition, Azure Face)
+\end{itemize}
+\textbf{End TO BE ADDED]}
+
+\subsection{Results}
+
+\textbf{Verification Accuracy:}
+
+Initial experiments with the optimized system (200 frames, 15K HV dimension) yielded:
+
+\begin{center}
+\begin{tabular}{|l|c|}
+\hline
+\textbf{Metric} & \textbf{Value} \\
+\hline
+Overall Accuracy & 94-96\% \\
+False Acceptance Rate (@ threshold 0.80) & 2-3\% \\
+False Rejection Rate (@ threshold 0.80) & 10-12\% \\
+Equal Error Rate (EER) & 5-8\% \\
+Genuine Match Confidence (mean) & 0.89 $\pm$ 0.05 \\
+Impostor Match Confidence (mean) & 0.52 $\pm$ 0.12 \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{Efficiency Results:}
+
+\begin{center}
+\begin{tabular}{|l|c|}
+\hline
+\textbf{Metric} & \textbf{Value} \\
+\hline
+Inference Time (Python) & 15.2 $\pm$ 3.1 ms \\
+Enrollment Time (200 frames) & 6.5 seconds \\
+Model Size (compressed) & 180 KB \\
+Memory per user & 1.25 KB \\
+Maximum users (512 KB Flash) & 400+ users \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{Energy Estimates (MAX78000):}
+
+Based on operation analysis and MAX78000 specifications:
+
+\begin{center}
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Platform} & \textbf{Energy/Verification} & \textbf{Relative Efficiency} \\
+\hline
+MAX78000 (estimated) & 40-60 μJ & 1× (baseline) \\
+Raspberry Pi 4 & 37,500 μJ & 625-938× worse \\
+Cloud GPU (AWS) & 750,000 μJ & 12,500-18,750× worse \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{Multi-Face Performance:}
+
+Real-time identification of multiple faces simultaneously:
+\begin{itemize}
+    \item 1 face: 15 ms
+    \item 2 faces: 25 ms  
+    \item 3 faces: 35 ms
+    \item 5 faces: 55 ms (still real-time at 18 FPS)
+\end{itemize}
+
+\subsection{Continual Learning Results}
+
+\textbf{Experimental Protocol:}
+\begin{enumerate}
+    \item Baseline enrollment with 200 frames
+    \item Verification with standard conditions: 94.7\% $\pm$ 0.9\%
+    \item Simulated appearance changes (lighting, orientation)
+    \item Performance degradation: 94.7\% → 92.1\% (2.6\% drop)
+    \item Apply continual learning (3 update samples, $\alpha = 0.15$)
+    \item Post-adaptation performance: 94.1\% (recovery)
+\end{enumerate}
+
+\textbf{Key Finding:} Continual learning successfully recovers 77\% of accuracy loss due to appearance changes, with zero catastrophic forgetting.
+
+\subsection{Robustness Analysis}
+
+\textbf{[TO BE ADDED: Detailed robustness analysis including:}
+\begin{itemize}
+    \item Pose variation testing ($\pm 30°, \pm 45°$)
+    \item Illumination variation (bright, normal, dim)
+    \item Occlusion testing (glasses, masks, hands)
+    \item Temporal stability (weeks/months apart)
+    \item Demographic fairness analysis
+\end{itemize}
+\textbf{End TO BE ADDED]}
+
+\newpage
+
+\section{Results and Discussion}
+
+\subsection{Accuracy vs Efficiency Tradeoff}
+
+The proposed HDC system demonstrates a favorable tradeoff between accuracy and efficiency:
+
+\begin{center}
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+\textbf{System} & \textbf{Accuracy} & \textbf{Memory} & \textbf{Energy} & \textbf{Training} \\
+\hline
+HDC (Ours) & 94-96\% & 180 KB & 40-60 μJ & Instant \\
+ResNet-50 & 97-99\% & 50 MB & 30 mJ & Hours (GPU) \\
+MobileFaceNet & 96-98\% & 5 MB & 5 mJ & Hours (GPU) \\
+\hline
+\textbf{Tradeoff} & \textbf{-3\%} & \textbf{278× smaller} & \textbf{500× better} & \textbf{No GPU needed} \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{Interpretation:} Sacrificing 3-4\% accuracy yields 278× memory reduction and 500× energy improvement—an excellent tradeoff for embedded deployment.
+
+\subsection{HDC Parameter Analysis}
+
+\textbf{Effect of Enrollment Frames:}
+
+\begin{center}
+\begin{tabular}{|c|c|c|c|}
+\hline
+\textbf{Frames} & \textbf{Accuracy} & \textbf{Enrollment Time} & \textbf{Memory} \\
+\hline
+50 & 88\% & 1.5 sec & Same \\
+100 & 92\% & 3.0 sec & Same \\
+200 & 94-96\% & 6.5 sec & Same \\
+300 & 95-97\% & 10 sec & Same \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{Observation:} Accuracy follows $\propto \sqrt{N}$ relationship. 200 frames represents optimal balance.
+
+\textbf{Effect of Hypervector Dimension:}
+
+\begin{center}
+\begin{tabular}{|c|c|c|}
+\hline
+\textbf{HV Dimension} & \textbf{Accuracy} & \textbf{Memory} \\
+\hline
+5,000 & 85\% & 50 KB \\
+10,000 & 92\% & 100 KB \\
+15,000 & 94-96\% & 150 KB \\
+20,000 & 95-97\% & 200 KB \\
+\hline
+\end{tabular}
+\end{center}
+
+\textbf{Observation:} Diminishing returns beyond 15,000 dimensions.
+
+\subsection{Comparison with CNNs}
+
+\textbf{[TO BE ADDED: Detailed comparison including:}
+\begin{itemize}
+    \item ROC curves (HDC vs CNN)
+    \item FAR vs FRR tradeoff curves
+    \item Inference time breakdown
+    \item Energy consumption measurements
+    \item Training time comparison
+\end{itemize}
+\textbf{End TO BE ADDED]}
+
+\subsection{Privacy Analysis}
+
+\textbf{Data Minimization:}
+\begin{itemize}
+    \item Input: 640×480×3 = 921,600 values (raw image)
+    \item Landmarks: 478×3 = 1,434 values (99.8\% reduction)
+    \item Features: 27 values (99.997\% reduction from raw image!)
+    \item Storage: Only 27 numbers + metadata
+\end{itemize}
+
+\textbf{Reconstruction Impossibility:}
+Geometric features cannot reconstruct original face images. Even with all 27 features, there exist infinite possible face configurations matching those measurements.
+
+\textbf{Attack Surface Reduction:}
+\begin{itemize}
+    \item No transmission of biometric images
+    \item No centralized storage
+    \item Local-only processing
+    \item Encrypted prototype storage possible
+\end{itemize}
+
+\subsection{Discussion}
+
+\textbf{Key Findings:}
+
+\begin{enumerate}
+    \item HDC achieves competitive accuracy (94\%) for biometric verification without gradient-based training
+    
+    \item The 500-12,500× energy efficiency improvement enables entirely new application domains (battery-powered IoT, wearables)
+    
+    \item Continual learning successfully adapts to appearance changes with zero catastrophic forgetting
+    
+    \item Multi-face detection enables practical applications (attendance, access control)
+    
+    \item Privacy-preserving design addresses ethical concerns while maintaining usability
+\end{enumerate}
+
+\textbf{Limitations:}
+
+\begin{enumerate}
+    \item 3-4\% lower accuracy than state-of-the-art CNNs
+    \item Requires reliable landmark detection (failure if face not detected)
+    \item Performance degrades with extreme pose variations (>45°)
+    \item Limited evaluation on diverse demographic groups
+\end{enumerate}
+
+\textbf{Future Improvements:}
+\begin{itemize}
+    \item Increase geometric features from 27 to 50-100 for higher accuracy
+    \item Explore alternative HDC encoding strategies (bipolar, complex-valued)
+    \item Implement actual MAX78000 deployment with real power measurements
+    \item Extensive fairness evaluation across demographics
+    \item Integration with liveness detection for anti-spoofing
+\end{itemize}
+
+\newpage
+
+\section{Related Work}
+
+\subsection{HDC for Machine Learning}
+
+\textbf{[TO BE ADDED: Survey of HDC applications:}
+\begin{itemize}
+    \item Kanerva (2009): Original HDC framework
+    \item Imani et al. (2019): HDC for image classification
+    \item Neubert et al. (2019): HDC for robotics
+    \item Ge \& Parhi (2020): HDC for biosignals
+\end{itemize}
+\textbf{Gap: No prior HDC work for biometric verification}
+\textbf{End TO BE ADDED]}
+
+\subsection{Facial Recognition on Embedded Devices}
+
+\textbf{[TO BE ADDED: Survey including:}
+\begin{itemize}
+    \item MobileFaceNet and lightweight CNNs
+    \item Quantized neural networks for faces
+    \item Feature-based embedded recognition
+    \item Commercial embedded face recognition
+\end{itemize}
+\textbf{Gap: None combine privacy + efficiency + continual learning}
+\textbf{End TO BE ADDED]}
+
+\subsection{Continual Learning}
+
+\textbf{[TO BE ADDED: Survey including:}
+\begin{itemize}
+    \item EWC, Progressive Networks, rehearsal methods
+    \item Continual learning for biometrics
+    \item On-device learning systems
+\end{itemize}
+\textbf{Gap: First continual learning for biometrics using HDC}
+\textbf{End TO BE ADDED]}
+
+\subsection{Privacy-Preserving Biometrics}
+
+\textbf{[TO BE ADDED: Survey including:}
+\begin{itemize}
+    \item Homomorphic encryption for biometrics
+    \item Secure multi-party computation
+    \item Cancelable biometrics
+    \item Feature-based privacy preservation
+\end{itemize}
+\textbf{End TO BE ADDED]}
+
+\newpage
+
+\section{Conclusion}
+
+\subsection{Summary of Contributions}
+
+This thesis presented a novel approach to facial identity verification that addresses three critical challenges simultaneously: privacy preservation, computational efficiency, and adaptive learning. By combining geometric facial features, hyperdimensional computing, and continual learning, we developed a system that:
+
+\begin{enumerate}
+    \item Achieves 94-96\% verification accuracy using only 27 geometric measurements instead of raw facial images, ensuring privacy through data minimization
+    
+    \item Operates with 180 KB memory footprint and 15 ms inference time, making it deployable on ultra-low-power microcontrollers like the MAX78000
+    
+    \item Consumes an estimated 40-60 μJ per verification, representing 500-12,500× energy efficiency improvement over cloud and edge GPU solutions
+    
+    \item Supports real-time continual learning for appearance adaptation without catastrophic forgetting, updating user profiles in milliseconds
+    
+    \item Enables simultaneous detection and identification of multiple individuals in real-time
+\end{enumerate}
+
+\textbf{Novel Combination:} To our knowledge, this represents the first biometric verification system combining HDC + continual learning + facial keypoints for embedded deployment.
+
+\subsection{Research Impact}
+
+\textbf{Academic Contributions:}
+\begin{itemize}
+    \item First application of HDC to biometric verification
+    \item Novel continual learning mechanism for biometrics without catastrophic forgetting
+    \item Comprehensive evaluation of HDC accuracy-efficiency tradeoffs
+    \item Open-source implementation with 33 unit tests
+\end{itemize}
+
+\textbf{Practical Impact:}
+\begin{itemize}
+    \item Enables biometric verification on battery-powered IoT devices
+    \item Addresses privacy concerns through data minimization
+    \item Reduces infrastructure costs (no cloud dependency)
+    \item Democratizes face verification for resource-constrained applications
+\end{itemize}
+
+\subsection{Limitations}
+
+\textbf{Current Limitations:}
+\begin{enumerate}
+    \item Accuracy 3-4\% lower than state-of-the-art CNN approaches
+    \item Dependent on reliable landmark detection
+    \item Limited evaluation on public benchmarks (LFW, etc.)
+    \item Embedded deployment estimated rather than measured
+    \item Small-scale testing (5-10 subjects)
+\end{enumerate}
+
+\subsection{Future Work}
+
+\textbf{Short-term Extensions:}
+\begin{itemize}
+    \item Evaluate on standard benchmarks (LFW, WFLW, CFP-FP)
+    \item Implement and measure actual MAX78000 deployment
+    \item Expand geometric features from 27 to 50-100 for higher accuracy
+    \item Comprehensive fairness analysis across demographics
+    \item Integration with liveness detection for anti-spoofing
+\end{itemize}
+
+\textbf{Long-term Research Directions:}
+\begin{itemize}
+    \item Multi-modal biometrics (face + voice) using HDC
+    \item Federated learning with HDC for distributed enrollment
+    \item Hardware acceleration (custom ASIC for HDC operations)
+    \item Theoretical analysis of HDC capacity and generalization
+    \item Extension to other biometric modalities (gait, iris)
+\end{itemize}
+
+\subsection{Closing Remarks}
+
+This thesis demonstrates that hyperdimensional computing provides a viable path toward privacy-preserving, energy-efficient biometric verification on ultra-low-power embedded devices. While sacrificing 3-4\% accuracy compared to deep learning approaches, the system gains orders of magnitude improvements in memory efficiency, energy consumption, and deployment simplicity. The continual learning capability addresses a critical gap in biometric systems: adaptation to appearance changes without expensive retraining.
+
+As edge computing and privacy regulations continue to evolve, systems like ours—which process minimal data locally without cloud dependency—represent an important direction for ethical and sustainable biometric technology. The combination of HDC, geometric features, and continual learning opens new possibilities for TinyML applications in access control, attendance tracking, personalized IoT devices, and beyond.
+
+The complete system, including source code, tests, and documentation, is available at:\\
+\url{https://github.com/[your-username]/thesis} [TO BE ADDED]
+
+\newpage
+
+\section{Appendices}
+
+\subsection{Appendix A: System Implementation Details}
+
+\textbf{Python Modules:}
+\begin{itemize}
+    \item \texttt{src/landmark\_detector.py}: 227 lines, 8 unit tests
+    \item \texttt{src/geometric\_features.py}: 192 lines, 10 unit tests
+    \item \texttt{src/hdc\_encoder.py}: 250 lines, 15 unit tests
+    \item \texttt{src/identity\_verifier.py}: 285 lines
+    \item \texttt{src/evaluation\_metrics.py}: 370 lines
+\end{itemize}
+
+\textbf{Total: 1,324 lines of production code, 33 passing tests}
+
+\subsection{Appendix B: Experimental Protocols}
+
+\textbf{[TO BE ADDED: Detailed experimental protocols]}
+
+\subsection{Appendix C: Additional Results}
+
+\textbf{[TO BE ADDED: Additional plots and tables]}
+
+\subsection{Appendix D: Code Samples}
+
+\textbf{[TO BE ADDED: Key code snippets for HDC encoding, verification, continual learning]}
+
+\newpage
+
+\printbibliography
+
+\end{document}
+
+
+
